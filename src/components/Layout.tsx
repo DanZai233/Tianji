@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Moon, Sun, Compass, BookOpen, Settings } from "lucide-react";
+import { Sparkles, Moon, Sun, Compass, BookOpen, Settings, ExternalLink, Github } from "lucide-react";
 import { cn } from "../lib/utils";
 
 export default function Layout() {
@@ -16,6 +16,16 @@ export default function Layout() {
 
   const settingsNavItems = [
     { path: "/settings/llm", name: "模型配置", icon: Settings },
+  ];
+
+  const moreWorks = [
+    { name: "天机", url: "https://tianji-nu.vercel.app/", icon: Sparkles, color: "text-indigo-400" },
+    { name: "AIMBOT", url: "https://aim.danzaii.cn/", icon: Github, color: "text-emerald-400" },
+    { name: "AetherLink", url: "https://aether-link-ten.vercel.app/", icon: ExternalLink, color: "text-blue-400" },
+    { name: "MoodCard", url: "https://mood.danzaii.cn/", icon: ExternalLink, color: "text-purple-400" },
+    { name: "PinDou", url: "https://pindou.danzaii.cn/", icon: ExternalLink, color: "text-pink-400" },
+    { name: "ChromatoPoetry", url: "https://color.danzaii.cn/", icon: ExternalLink, color: "text-amber-400" },
+    { name: "Toiletime", url: "https://time.danzaii.cn/", icon: ExternalLink, color: "text-teal-400" },
   ];
 
   return (
@@ -71,6 +81,28 @@ export default function Layout() {
               );
             })}
           </nav>
+          
+          <div className="mt-6 pt-6 border-t border-white/10">
+            <h3 className="text-xs text-neutral-500 tracking-widest mb-3 uppercase">更多作品</h3>
+            <div className="space-y-1">
+              {moreWorks.map((work) => {
+                const Icon = work.icon;
+                return (
+                  <a
+                    key={work.name}
+                    href={work.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-300 group"
+                  >
+                    <Icon className={`w-4 h-4 ${work.color} group-hover:scale-110 transition-transform`} />
+                    <span className="text-sm tracking-wider">{work.name}</span>
+                    <ExternalLink className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-50 transition-opacity" />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </aside>
 
