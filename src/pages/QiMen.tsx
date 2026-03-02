@@ -1,23 +1,43 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { GoogleGenAI } from "@google/genai";
 import QiMenRitual from "../components/QiMenRitual";
 import ChatBox from "../components/ChatBox";
 import ReactMarkdown from "react-markdown";
+import { LLMService } from "../lib/llm-service";
+import { LLMProviderConfig, DEFAULT_PROVIDERS, LLMMessage } from "../lib/llm-providers";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const STORAGE_KEY = "tianji_llm_providers";
+
+function getActiveProvider(): LLMProviderConfig | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const providers: LLMProviderConfig[] = saved ? JSON.parse(saved) : DEFAULT_PROVIDERS;
+    const enabled = providers.find(p => p.enabled && p.apiKey);
+    return enabled || null;
+  } catch {
+    return DEFAULT_PROVIDERS.find(p => p.enabled && p.apiKey) || null;
+  }
+}
 
 export default function QiMen() {
   const [question, setQuestion] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [panInfo, setPanInfo] = useState<{ zhiFu: string; zhiShi: string; ju: string } | null>(null);
+  const [needsConfig, setNeedsConfig] = useState(false);
 
   const calculate = async () => {
     if (!question.trim()) return;
     setIsCalculating(true);
 
-    // Mock Qi Men Pan info
+    const provider = getActiveProvider();
+    
+    if (!provider) {
+      setNeedsConfig(true);
+      setIsCalculating(false);
+      return;
+    }
+
     const jia = ["阳遁一局", "阴遁九局", "阳遁八局", "阴遁三局"][Math.floor(Math.random() * 4)];
     const zhiFu = ["天蓬星", "天任星", "天冲星", "天辅星", "天英星", "天芮星", "天柱星", "天心星"][Math.floor(Math.random() * 8)];
     const zhiShi = ["休门", "生门", "伤门", "杜门", "景门", "死门", "惊门", "开门"][Math.floor(Math.random() * 8)];
@@ -25,15 +45,18 @@ export default function QiMen() {
     setPanInfo({ ju: jia, zhiFu, zhiShi });
 
     try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: `用户的问题是：“${question}”。\n当前起局：${jia}，值符：${zhiFu}，值使：${zhiShi}。\n请作为一位精通奇门遁甲的大师，根据此局象（可自行推演九宫八门九星神盘的落宫情况以增加专业性），对用户的问题进行详细的断局和解答。必须包含：\n1. 所测事物的吉凶判断。\n2. 事情的发展趋势。\n3. 具体的应对策略和化解建议。\n排版优美，使用Markdown格式。`,
-      });
-
+      const llmService = new LLMService(provider);
+      const messages: LLMMessage[] = [
+        { role: "user", content: `用户的问题是："${question}"。\n当前起局：${jia}，值符：${zhiFu}，值使：${zhiShi}。\n请作为一位精通奇门遁甲的大师，根据此局象（可自行推演九宫八门九星神盘的落宫情况以增加专业性），对用户的问题进行详细的断局和解答。必须包含：\n1. 所测事物的吉凶判断。\n2. 事情的发展趋势。\n3. 具体的应对策略和化解建议。\n排版优美，使用 Markdown 格式。` }
+      ];
+      
+      const response = await llmService.sendMessage(messages);
       setResult(response.text || "排盘失败，请重试。");
     } catch (error) {
       console.error(error);
       setResult("抱歉，天机不可泄露，请稍后再试。");
+    } finally {
+      setIsCalculating(false);
     }
   };
 
@@ -50,91 +73,77 @@ export default function QiMen() {
         <p className="text-emerald-300/60 tracking-wider">运筹帷幄之中，决胜千里之外</p>
       </header>
 
-      {!result ? (
-        <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full gap-12">
-          
-          <div className="relative w-64 h-64 border border-emerald-500/30 rounded-full flex items-center justify-center animate-[spin_60s_linear_infinite]">
-            <div className="absolute inset-2 border border-dashed border-emerald-500/20 rounded-full"></div>
-            <div className="absolute inset-8 border border-emerald-500/10 rounded-full flex items-center justify-center">
-              <div className="w-16 h-16 border border-emerald-500/40 transform rotate-45 flex items-center justify-center">
-                 <span className="transform -rotate-45 text-emerald-500/50 font-serif">遁</span>
-              </div>
+      {!result && !needsConfig ? (
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="w-full max-w-2xl">
+            <div className="mb-8">
+              <label className="block text-sm text-emerald-300/70 mb-3 tracking-wider">请写下您要占卜的问题</label>
+              <textarea
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="例如：我目前的工作发展前景如何？我是否应该跳槽？"
+                className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder:text-emerald-200/30 focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+              />
             </div>
-            {/* Bagua markers */}
-            {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
-              <div key={deg} className="absolute w-1 h-3 bg-emerald-500/40" style={{ transform: `rotate(${deg}deg) translateY(-32px)` }}></div>
-            ))}
-          </div>
 
-          <div className="w-full space-y-4">
-            <input
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="输入你所求之事（如：寻物、求财、出行）..."
-              className="w-full bg-emerald-950/20 border-b border-emerald-500/50 p-4 text-center text-white placeholder:text-emerald-300/30 focus:outline-none focus:border-emerald-400 transition-colors"
-            />
             <button
               onClick={calculate}
-              disabled={!question.trim()}
-              className="w-full py-4 bg-emerald-900/40 border border-emerald-500/30 rounded-xl text-emerald-200 tracking-[0.2em] hover:bg-emerald-800/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!question.trim() || isCalculating}
+              className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:from-neutral-700 disabled:to-neutral-700 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-300 tracking-widest font-medium shadow-lg"
             >
-              起局推演
+              起局排盘
             </button>
           </div>
         </div>
+      ) : needsConfig ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <h2 className="text-xl font-medium text-white/80 mb-2">需要配置 API Key</h2>
+          <p className="text-sm text-neutral-400 mb-6">请先配置大模型 API 才能使用此功能</p>
+          <a
+            href="/settings/llm"
+            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors tracking-wider font-medium"
+          >
+            去配置
+          </a>
+        </div>
       ) : (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          className="flex-1 flex flex-col"
         >
-          <div className="flex flex-col gap-6">
-            <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-2xl p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <div className="text-6xl font-serif">遁</div>
+          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 mb-8">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-2xl font-medium tracking-wider text-emerald-100">问题：{question}</h2>
+                {panInfo && (
+                  <div className="flex gap-6 mt-3 text-sm text-emerald-300/60">
+                    <span>局数：{panInfo.ju}</span>
+                    <span>值符：{panInfo.zhiFu}</span>
+                    <span>值使：{panInfo.zhiShi}</span>
+                  </div>
+                )}
               </div>
-              <h3 className="text-emerald-400 text-sm tracking-widest mb-4">当前局象</h3>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="bg-black/30 p-3 rounded-lg border border-emerald-500/10">
-                  <p className="text-emerald-500/60 text-xs mb-1">局数</p>
-                  <p className="text-emerald-100">{panInfo?.ju}</p>
-                </div>
-                <div className="bg-black/30 p-3 rounded-lg border border-emerald-500/10">
-                  <p className="text-emerald-500/60 text-xs mb-1">值符</p>
-                  <p className="text-emerald-100">{panInfo?.zhiFu}</p>
-                </div>
-                <div className="bg-black/30 p-3 rounded-lg border border-emerald-500/10">
-                  <p className="text-emerald-500/60 text-xs mb-1">值使</p>
-                  <p className="text-emerald-100">{panInfo?.zhiShi}</p>
-                </div>
-              </div>
-              <div className="mt-6 pt-6 border-t border-emerald-500/20">
-                <p className="text-emerald-400/60 text-sm tracking-wider mb-2">所测之事：</p>
-                <p className="text-lg text-emerald-50">{question}</p>
-              </div>
+              <button
+                onClick={() => {
+                  setResult(null);
+                  setQuestion("");
+                  setPanInfo(null);
+                }}
+                className="text-emerald-300/50 hover:text-emerald-200 transition-colors text-sm tracking-wider"
+              >
+                重新起局
+              </button>
             </div>
-
-            <button 
-              onClick={() => { setResult(null); setQuestion(""); setIsCalculating(false); }}
-              className="w-full py-3 rounded-xl border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10 transition-colors tracking-widest"
-            >
-              重新起局
-            </button>
+            <div className="prose prose-invert prose-emerald max-w-none">
+              <ReactMarkdown>{result || ""}</ReactMarkdown>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-6">
-            <div className="bg-emerald-950/10 border border-emerald-500/20 rounded-2xl p-6 md:p-8 overflow-y-auto max-h-[50vh] prose prose-invert prose-emerald">
-              <div className="markdown-body">
-                <ReactMarkdown>{result}</ReactMarkdown>
-              </div>
-            </div>
-            
-            <ChatBox 
-              context={`问题：${question}\n局象：${panInfo?.ju}，值符${panInfo?.zhiFu}，值使${panInfo?.zhiShi}\n断局：${result}`}
-              systemInstruction="你是一位精通奇门遁甲的国学大师。用户刚刚进行了奇门排盘，你需要根据之前的断局，回答用户进一步的疑问。语气要高深、沉稳、充满东方哲理。"
-            />
-          </div>
+          <ChatBox
+            context={`问题：${question}\n局数：${panInfo?.ju}\n值符：${panInfo?.zhiFu}\n值使：${panInfo?.zhiShi}\n\n排盘结果：\n${result}`}
+            systemInstruction="你是一位精通奇门遁甲的易学大师，正在为用户解读奇门局象。请基于上面的局象和解读，回答用户的疑问，给出更详细的解释和建议。"
+          />
         </motion.div>
       )}
     </div>
