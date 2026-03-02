@@ -6,14 +6,14 @@ const categories = [
     path: "/astrology",
     name: "星象占星",
     desc: "洞察星辰轨迹，解读命运密码",
-    image: "https://images.pexels.com/photos/386063/pexels-photo-386063.jpeg?auto=compress&cs=tinysrgb&w=1920",
+    image: "https://images.pexels.com/photos/6943305/pexels-photo-6943305.jpeg?auto=compress&cs=tinysrgb&w=1920",
     color: "from-blue-900/80 to-indigo-900/80",
   },
   {
     path: "/tarot",
     name: "塔罗秘仪",
     desc: "倾听潜意识的低语，揭示未知之境",
-    image: "https://images.pexels.com/photos/6592394/pexels-photo-6592394.jpeg?auto=compress&cs=tinysrgb&w=1920",
+    image: "https://images.pexels.com/photos/6871033/pexels-photo-6871033.jpeg?auto=compress&cs=tinysrgb&w=1920",
     color: "from-purple-900/80 to-fuchsia-900/80",
   },
   {
@@ -27,7 +27,7 @@ const categories = [
     path: "/iching",
     name: "周易八卦",
     desc: "推演阴阳变化，明辨万物之理",
-    image: "https://images.pexels.com/photos/7475831/pexels-photo-7475831.jpeg?auto=compress&cs=tinysrgb&w=1920",
+    image: "https://images.pexels.com/photos/6364053/pexels-photo-6364053.jpeg?auto=compress&cs=tinysrgb&w=1920",
     color: "from-amber-900/80 to-orange-900/80",
   },
 ];
