@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Send, Sparkles, Loader2 } from "lucide-react";
-import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from "react-markdown";
+import { LLMService } from "../lib/llm-service";
+import { LLMProviderConfig, DEFAULT_PROVIDERS, LLMMessage } from "../lib/llm-providers";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const STORAGE_KEY = "tianji_llm_providers";
 
 interface Message {
   role: "user" | "model";
@@ -16,30 +17,39 @@ interface ChatBoxProps {
   systemInstruction: string;
 }
 
+function getActiveProvider(): LLMProviderConfig | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const providers: LLMProviderConfig[] = saved ? JSON.parse(saved) : DEFAULT_PROVIDERS;
+    const enabled = providers.find(p => p.enabled && p.apiKey);
+    return enabled || null;
+  } catch {
+    return DEFAULT_PROVIDERS.find(p => p.enabled && p.apiKey) || null;
+  }
+}
+
 export default function ChatBox({ context, systemInstruction }: ChatBoxProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [chatSession, setChatSession] = useState<any>(null);
+  const [llmService, setLlmService] = useState<LLMService | null>(null);
+  const [providerName, setProviderName] = useState<string>("");
 
   useEffect(() => {
-    // Initialize chat session
-    const chat = ai.chats.create({
-      model: "gemini-3.1-pro-preview",
-      config: {
-        systemInstruction: `${systemInstruction}\n\n当前占卜结果上下文：\n${context}`,
-      },
-    });
-    setChatSession(chat);
-  }, [context, systemInstruction]);
+    const provider = getActiveProvider();
+    if (provider) {
+      setLlmService(new LLMService(provider));
+      setProviderName(provider.name);
+    }
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || !chatSession || isLoading) return;
+    if (!input.trim() || !llmService || isLoading) return;
 
     const userMsg = input.trim();
     setInput("");
@@ -47,7 +57,13 @@ export default function ChatBox({ context, systemInstruction }: ChatBoxProps) {
     setIsLoading(true);
 
     try {
-      const response = await chatSession.sendMessage({ message: userMsg });
+      const allMessages: LLMMessage[] = [
+        { role: "system", content: `${systemInstruction}\n\n 当前占卜结果上下文：\n${context}` },
+        ...messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+        { role: "user", content: userMsg },
+      ];
+
+      const response = await llmService.sendMessage(allMessages);
       setMessages((prev) => [...prev, { role: "model", content: response.text }]);
     } catch (error) {
       console.error("Chat error:", error);
@@ -59,9 +75,14 @@ export default function ChatBox({ context, systemInstruction }: ChatBoxProps) {
 
   return (
     <div className="flex flex-col h-[500px] bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
-      <div className="p-4 border-b border-white/10 bg-black/20 flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-indigo-400" />
-        <span className="text-sm tracking-widest text-white/80">解惑对话</span>
+      <div className="p-4 border-b border-white/10 bg-black/20 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-indigo-400" />
+          <span className="text-sm tracking-widest text-white/80">解惑对话</span>
+        </div>
+        {providerName && (
+          <span className="text-xs text-neutral-500 tracking-wider">{providerName}</span>
+        )}
       </div>
       
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

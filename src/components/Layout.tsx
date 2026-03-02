@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Moon, Sun, Compass, BookOpen } from "lucide-react";
+import { Sparkles, Moon, Sun, Compass, BookOpen, Settings } from "lucide-react";
 import { cn } from "../lib/utils";
 
 export default function Layout() {
@@ -12,6 +12,10 @@ export default function Layout() {
     { path: "/tarot", name: "塔罗", icon: Sun },
     { path: "/qimen", name: "奇门", icon: Compass },
     { path: "/iching", name: "周易", icon: BookOpen },
+  ];
+
+  const settingsNavItems = [
+    { path: "/settings/llm", name: "模型配置", icon: Settings },
   ];
 
   return (
@@ -45,6 +49,29 @@ export default function Layout() {
             );
           })}
         </nav>
+        <div className="mt-auto pt-6 border-t border-white/10">
+          <nav className="flex flex-col gap-2">
+            {settingsNavItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300",
+                    isActive
+                      ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                      : "text-neutral-400 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="tracking-widest">{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -82,6 +109,16 @@ export default function Layout() {
             </Link>
           );
         })}
+        <Link
+          to="/settings/llm"
+          className={cn(
+            "flex flex-col items-center gap-1 p-2 transition-colors",
+            location.pathname === "/settings/llm" ? "text-white" : "text-neutral-500"
+          )}
+        >
+          <Settings className="w-5 h-5" />
+          <span className="text-[10px] tracking-widest">配置</span>
+        </Link>
       </nav>
     </div>
   );
