@@ -5,7 +5,11 @@ export type LLMProviderType =
   | "volcengine"
   | "baidu"
   | "aliyun"
-  | "tencent";
+  | "tencent"
+  | "siliconflow"
+  | "deepseek"
+  | "zhipu"
+  | "moonshot";
 
 export interface LLMProviderConfig {
   type: LLMProviderType;
@@ -35,6 +39,7 @@ export const PROVIDER_INFO: Record<LLMProviderType, {
   defaultBaseURL: string;
   modelPrefix: string;
   envVarName: string;
+  isFree?: boolean;
 }> = {
   gemini: {
     name: "Gemini",
@@ -78,16 +83,76 @@ export const PROVIDER_INFO: Record<LLMProviderType, {
     modelPrefix: "hunyuan-",
     envVarName: "TENCENT_API_KEY",
   },
+  siliconflow: {
+    name: "硅基流动",
+    defaultBaseURL: "https://api.siliconflow.cn/v1",
+    modelPrefix: "Qwen/",
+    envVarName: "SILICONFLOW_API_KEY",
+    isFree: true,
+  },
+  deepseek: {
+    name: "深度求索",
+    defaultBaseURL: "https://api.deepseek.com/v1",
+    modelPrefix: "deepseek-",
+    envVarName: "DEEPSEEK_API_KEY",
+    isFree: true,
+  },
+  zhipu: {
+    name: "智谱 AI",
+    defaultBaseURL: "https://open.bigmodel.cn/api/paas/v4",
+    modelPrefix: "glm-",
+    envVarName: "ZHIPU_API_KEY",
+    isFree: true,
+  },
+  moonshot: {
+    name: "Moonshot AI",
+    defaultBaseURL: "https://api.moonshot.cn/v1",
+    modelPrefix: "moonshot-",
+    envVarName: "MOONSHOT_API_KEY",
+    isFree: true,
+  },
 };
 
 export const DEFAULT_PROVIDERS: LLMProviderConfig[] = [
+  {
+    type: "siliconflow",
+    name: "硅基流动",
+    apiKey: "",
+    baseURL: "https://api.siliconflow.cn/v1",
+    model: "Qwen/Qwen2.5-7B-Instruct",
+    enabled: true,
+  },
+  {
+    type: "deepseek",
+    name: "深度求索",
+    apiKey: "",
+    baseURL: "https://api.deepseek.com/v1",
+    model: "deepseek-chat",
+    enabled: true,
+  },
+  {
+    type: "zhipu",
+    name: "智谱 AI",
+    apiKey: "",
+    baseURL: "https://open.bigmodel.cn/api/paas/v4",
+    model: "glm-4-flash",
+    enabled: true,
+  },
+  {
+    type: "moonshot",
+    name: "Moonshot AI",
+    apiKey: "",
+    baseURL: "https://api.moonshot.cn/v1",
+    model: "moonshot-v1-8k",
+    enabled: true,
+  },
   {
     type: "gemini",
     name: "Gemini",
     apiKey: "",
     baseURL: "https://generativelanguage.googleapis.com",
     model: "gemini-2.0-flash",
-    enabled: true,
+    enabled: false,
   },
   {
     type: "openai",

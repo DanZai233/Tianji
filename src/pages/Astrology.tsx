@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import AstrologyRitual from "../components/AstrologyRitual";
 import ChatBox from "../components/ChatBox";
 import ReactMarkdown from "react-markdown";
 import { LLMService } from "../lib/llm-service";
-import { LLMProviderConfig, DEFAULT_PROVIDERS, LLMMessage } from "../lib/llm-providers";
+import { LLMProviderConfig, DEFAULT_PROVIDERS, LLMMessage, PROVIDER_INFO } from "../lib/llm-providers";
 
 const STORAGE_KEY = "tianji_llm_providers";
 
@@ -29,15 +29,31 @@ export default function Astrology() {
   const [zodiac, setZodiac] = useState("");
   const [aspect, setAspect] = useState("综合运势");
   const [timeframe, setTimeframe] = useState("今日");
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const [isCalculating, setIsCalculating] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [needsConfig, setNeedsConfig] = useState(false);
+  const [enabledProviders, setEnabledProviders] = useState<LLMProviderConfig[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const providers: LLMProviderConfig[] = saved ? JSON.parse(saved) : DEFAULT_PROVIDERS;
+      const enabled = providers.filter(p => p.enabled && p.apiKey);
+      setEnabledProviders(enabled);
+      if (enabled.length > 0 && !selectedModel) {
+        setSelectedModel(enabled[0].type);
+      }
+    } catch {
+      setEnabledProviders(DEFAULT_PROVIDERS.filter(p => p.enabled && p.apiKey));
+    }
+  }, [selectedModel]);
 
   const calculate = async () => {
     if (!zodiac) return;
     setIsCalculating(true);
 
-    const provider = getActiveProvider();
+    const provider = enabledProviders.find(p => p.type === selectedModel);
     
     if (!provider) {
       setNeedsConfig(true);
@@ -97,6 +113,20 @@ export default function Astrology() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-8">
+              <div>
+                <label className="block text-sm text-blue-300/70 mb-3 tracking-wider">选择模型</label>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                >
+                  {enabledProviders.map((p) => (
+                    <option key={p.type} value={p.type}>
+                      {p.name} {PROVIDER_INFO[p.type].isFree ? "（免费）" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm text-blue-300/70 mb-3 tracking-wider">预测维度</label>
                 <div className="flex gap-2">

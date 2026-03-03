@@ -23,6 +23,14 @@ export class LLMService {
         return this.sendAliyun(messages, systemInstruction);
       case "tencent":
         return this.sendTencent(messages, systemInstruction);
+      case "siliconflow":
+        return this.sendSiliconFlow(messages, systemInstruction);
+      case "deepseek":
+        return this.sendDeepSeek(messages, systemInstruction);
+      case "zhipu":
+        return this.sendZhipu(messages, systemInstruction);
+      case "moonshot":
+        return this.sendMoonshot(messages, systemInstruction);
       default:
         throw new Error(`Unsupported provider: ${this.config.type}`);
     }
@@ -247,6 +255,138 @@ export class LLMService {
       usage: {
         input_tokens: data.Usage?.InputTokens || 0,
         output_tokens: data.Usage?.OutputTokens || 0,
+      },
+    };
+  }
+
+  private async sendSiliconFlow(messages: LLMMessage[], systemInstruction?: string): Promise<LLMResponse> {
+    const allMessages = systemInstruction
+      ? [{ role: "system" as const, content: systemInstruction }, ...messages]
+      : messages;
+
+    const response = await fetch(`${this.config.baseURL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.config.model,
+        messages: allMessages,
+        max_tokens: 2048,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`硅基流动 API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      text: data.choices[0].message.content,
+      model: this.config.model,
+      usage: {
+        input_tokens: data.usage.prompt_tokens,
+        output_tokens: data.usage.completion_tokens,
+      },
+    };
+  }
+
+  private async sendDeepSeek(messages: LLMMessage[], systemInstruction?: string): Promise<LLMResponse> {
+    const allMessages = systemInstruction
+      ? [{ role: "system" as const, content: systemInstruction }, ...messages]
+      : messages;
+
+    const response = await fetch(`${this.config.baseURL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.config.model,
+        messages: allMessages,
+        max_tokens: 2048,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`深度求索 API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      text: data.choices[0].message.content,
+      model: this.config.model,
+      usage: {
+        input_tokens: data.usage.prompt_tokens,
+        output_tokens: data.usage.completion_tokens,
+      },
+    };
+  }
+
+  private async sendZhipu(messages: LLMMessage[], systemInstruction?: string): Promise<LLMResponse> {
+    const allMessages = systemInstruction
+      ? [{ role: "system" as const, content: systemInstruction }, ...messages]
+      : messages;
+
+    const response = await fetch(`${this.config.baseURL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.config.model,
+        messages: allMessages,
+        max_tokens: 2048,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`智谱 AI API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      text: data.data?.choices?.[0]?.content || data.choices[0].message.content,
+      model: this.config.model,
+      usage: {
+        input_tokens: data.usage?.prompt_tokens || 0,
+        output_tokens: data.usage?.completion_tokens || 0,
+      },
+    };
+  }
+
+  private async sendMoonshot(messages: LLMMessage[], systemInstruction?: string): Promise<LLMResponse> {
+    const allMessages = systemInstruction
+      ? [{ role: "system" as const, content: systemInstruction }, ...messages]
+      : messages;
+
+    const response = await fetch(`${this.config.baseURL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.config.model,
+        messages: allMessages,
+        max_tokens: 2048,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Moonshot API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      text: data.choices[0].message.content,
+      model: this.config.model,
+      usage: {
+        input_tokens: data.usage.prompt_tokens,
+        output_tokens: data.usage.completion_tokens,
       },
     };
   }

@@ -144,6 +144,11 @@ export default function LLMSettings() {
                     <h2 className="text-xl font-medium tracking-wider">
                       {PROVIDER_INFO[provider.type].name}
                     </h2>
+                    {PROVIDER_INFO[provider.type].isFree && (
+                      <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30">
+                        免费
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={() => handleToggleEnabled(provider.type)}
