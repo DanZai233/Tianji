@@ -44,6 +44,13 @@ export default function LLMSettings() {
     setIsDirty(true);
   };
 
+  const handleBaseURLChange = (type: LLMProviderType, value: string) => {
+    setProviders(prev =>
+      prev.map(p => (p.type === type ? { ...p, baseURL: value } : p))
+    );
+    setIsDirty(true);
+  };
+
   const handleToggleEnabled = (type: LLMProviderType) => {
     setProviders(prev =>
       prev.map(p => (p.type === type ? { ...p, enabled: !p.enabled } : p))
@@ -202,6 +209,22 @@ export default function LLMSettings() {
                     />
                     <p className="text-xs text-neutral-500 mt-2">
                       默认：{PROVIDER_INFO[provider.type].modelPrefix}*
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-neutral-400 mb-2 tracking-wider">
+                      API Base URL
+                    </label>
+                    <input
+                      type="text"
+                      value={provider.baseURL || PROVIDER_INFO[provider.type].defaultBaseURL}
+                      onChange={(e) => handleBaseURLChange(provider.type, e.target.value)}
+                      placeholder={PROVIDER_INFO[provider.type].defaultBaseURL}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-neutral-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                    />
+                    <p className="text-xs text-neutral-500 mt-2">
+                      默认：{PROVIDER_INFO[provider.type].defaultBaseURL}
                     </p>
                   </div>
 

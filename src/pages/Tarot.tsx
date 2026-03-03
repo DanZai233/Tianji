@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import TarotRitual from "../components/TarotRitual";
 import ChatBox from "../components/ChatBox";
@@ -125,12 +126,12 @@ export default function Tarot() {
         <div className="flex-1 flex flex-col items-center justify-center text-center">
           <h2 className="text-xl font-medium text-white/80 mb-2">需要配置 API Key</h2>
           <p className="text-sm text-neutral-400 mb-6">请先配置大模型 API 才能使用此功能</p>
-          <a
-            href="/settings/llm"
+          <Link
+            to="/settings/llm"
             className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-xl transition-colors tracking-wider font-medium"
           >
             去配置
-          </a>
+          </Link>
         </div>
       ) : (
         <motion.div
