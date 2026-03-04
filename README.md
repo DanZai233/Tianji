@@ -1,8 +1,6 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # 天机 - 多模型 AI 占卜应用
+
+![首页](屏幕截图 2026-03-04 103058.png)
 
 支持多种主流大模型的在线占卜应用，提供星象占星、塔罗秘仪、奇门遁甲、周易八卦等功能。
 
